@@ -14,10 +14,11 @@ logger = logging.getLogger(__name__)
 class EmbeddingClient:
     def __init__(self):
         self.base_url = settings.OLLAMA_BASE_URL
-        self.model = getattr(settings, 'EMBEDDING_MODEL', None)
+        raw_model = getattr(settings, 'EMBEDDING_MODEL', None)
+        self.model = raw_model.strip() if raw_model else None
         self.timeout = httpx.Timeout(60.0, connect=10.0)
         if not self.model:
-            logger.warning('No EMBEDDING_MODEL configurado. El pipeline funcionará solo con LLM.')
+            logger.warning('No EMBEDDING_MODEL configurado o está vacío. El pipeline funcionará solo con LLM.')
 
     async def embed(self, text: str) -> list[float]:
         """Genera el embedding de un único texto."""
