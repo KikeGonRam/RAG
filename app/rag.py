@@ -63,10 +63,18 @@ class RAGPipeline:
 
     async def ask(self, question: str, collection: str = "default", top_k: int = 4) -> dict:
         """
-        Pipeline RAG completo:
-        pregunta → embedding → búsqueda vectorial → prompt augmentation → LLM → respuesta
+        Pipeline RAG completo o solo LLM si no hay embeddings.
         """
         logger.info(f"🔍 Query: {question}")
+
+        # Si no hay modelo de embeddings, responde solo con el LLM
+        if not hasattr(self.embedder, 'model') or not self.embedder.model:
+            answer = await self.llm.chat(question)
+            return {
+                "answer": answer,
+                "sources": [],
+                "context_used": 0
+            }
 
         # 1. Embedding de la pregunta
         query_embedding = await self.embedder.embed(question)
@@ -105,7 +113,14 @@ class RAGPipeline:
     async def ask_stream(
         self, question: str, collection: str = "default", top_k: int = 4
     ) -> AsyncGenerator[str, None]:
-        """Versión streaming del pipeline RAG (Server-Sent Events)."""
+        """Versión streaming del pipeline RAG (Server-Sent Events) o solo LLM si no hay embeddings."""
+
+        # Si no hay modelo de embeddings, responde solo con el LLM
+        if not hasattr(self.embedder, 'model') or not self.embedder.model:
+            async for token in self.llm.chat_stream(question):
+                yield f"data: {token}\n\n"
+            yield "data: [DONE]\n\n"
+            return
 
         query_embedding = await self.embedder.embed(question)
         results = self.vectorstore.query(
