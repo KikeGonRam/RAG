@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     # Ollama
     OLLAMA_BASE_URL: str = "http://ollama:11434"
     OLLAMA_MODEL: str = "qwen2.5:7b"
-    EMBEDDING_MODEL: str = "nomic-embed-text"
+    EMBEDDING_MODEL: str | None = None  # Puede ser None para LLM-only
 
     # LLM
     LLM_TEMPERATURE: float = 0.2
