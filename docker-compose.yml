@@ -63,6 +63,8 @@ services:
       - CHUNK_OVERLAP=64
       - LLM_TEMPERATURE=0.2
       - LLM_CTX_WINDOW=4096
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - chroma_data:/app/data/chroma_db
       # Montaje en modo dev (hot-reload):
