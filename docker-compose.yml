@@ -3,47 +3,47 @@ version: "3.9"
 services:
 
   # ── Ollama (LLM local) ─────────────────────────────────────────────────────
-  ollama:
-    image: ollama/ollama:latest
-    container_name: rag-ollama
-    restart: unless-stopped
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    # Descomenta si tienes GPU NVIDIA:
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: 1
-    #           capabilities: [gpu]
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 20s
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: rag-ollama
+  #   restart: unless-stopped
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama_data:/root/.ollama
+  #   # Descomenta si tienes GPU NVIDIA:
+  #   # deploy:
+  #   #   resources:
+  #   #     reservations:
+  #   #       devices:
+  #   #         - driver: nvidia
+  #   #           count: 1
+  #   #           capabilities: [gpu]
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5
+  #     start_period: 20s
 
   # ── Servicio de setup: descarga los modelos necesarios ────────────────────
-  ollama-setup:
-    image: ollama/ollama:latest
-    container_name: rag-ollama-setup
-    depends_on:
-      ollama:
-        condition: service_healthy
-    environment:
-      - OLLAMA_HOST=http://ollama:11434
-    entrypoint: >
-      sh -c "
-        echo '📥 Descargando modelo LLM: qwen2.5:7b ...' &&
-        ollama pull qwen2.5:7b &&
-        echo '📥 Descargando modelo embeddings: nomic-embed-text ...' &&
-        ollama pull nomic-embed-text &&
-        echo '✅ Modelos listos.'
-      "
-    restart: "no"
+  # ollama-setup:
+  #   image: ollama/ollama:latest
+  #   container_name: rag-ollama-setup
+  #   depends_on:
+  #     ollama:
+  #       condition: service_healthy
+  #   environment:
+  #     - OLLAMA_HOST=http://ollama:11434
+  #   entrypoint: >
+  #     sh -c "
+  #       echo '📥 Descargando modelo LLM: qwen2.5:7b ...' &&
+  #       ollama pull qwen2.5:7b &&
+  #       echo '📥 Descargando modelo embeddings: nomic-embed-text ...' &&
+  #       ollama pull nomic-embed-text &&
+  #       echo '✅ Modelos listos.'
+  #     "
+  #   restart: "no"
 
   # ── API FastAPI + RAG ──────────────────────────────────────────────────────
   api:
@@ -55,7 +55,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
       - OLLAMA_MODEL=qwen2.5:7b
       - EMBEDDING_MODEL=nomic-embed-text
       - CHROMA_PATH=/app/data/chroma_db
@@ -67,9 +67,6 @@ services:
       - chroma_data:/app/data/chroma_db
       # Montaje en modo dev (hot-reload):
       - ./app:/app/app
-    depends_on:
-      ollama:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
