@@ -3,7 +3,7 @@
 Sistema RAG (Retrieval Augmented Generation) local con **FastAPI + ChromaDB + Ollama**.  
 100% local, sin OpenAI ni APIs externas.
 
-```
+```text
 Usuario → POST /ask → Embedding → ChromaDB → Contexto → Ollama → Respuesta
 ```
 
@@ -11,10 +11,21 @@ Usuario → POST /ask → Embedding → ChromaDB → Contexto → Ollama → Res
 
 ## 📁 Estructura del proyecto
 
-```
+```text
 rag-ollama/
 ├── app/
-│   ├── main.py          # FastAPI entrypoint + endpoints
+│   ├── main.py          # FastAPI app + include_router
+│   ├── api/
+│   │   ├── router.py    # Router principal
+│   │   ├── schemas.py   # Schemas Pydantic
+│   │   └── routes/
+│   │       ├── public.py
+│   │       ├── collab.py
+│   │       └── admin_keys.py
+│   ├── core/
+│   │   └── state.py     # Estado compartido (rag/chat/key-store)
+│   ├── mcp/
+│   │   └── capabilities.py  # Manifest de capacidades MCP-ready
 │   ├── rag.py           # Orquestador del pipeline RAG
 │   ├── vectorstore.py   # ChromaDB wrapper
 │   ├── llm.py           # Cliente Ollama (chat + streaming)
@@ -49,6 +60,7 @@ docker compose up -d
 ```
 
 Esto levanta:
+
 - **Ollama** en `localhost:11434`
 - **ollama-setup**: descarga automáticamente `qwen2.5:7b` y `nomic-embed-text`
 - **API FastAPI** en `localhost:8000`
@@ -70,11 +82,12 @@ curl http://localhost:8000/health
 ## 📡 Endpoints
 
 | Método | Ruta | Descripción |
-|--------|------|-------------|
+| -------- | ---- | ----------- |
 | `GET` | `/` | Info del servidor |
 | `GET` | `/health` | Estado de Ollama y ChromaDB |
 | `GET` | `/ui` | Interfaz visual para colaboradores |
 | `GET` | `/admin` | Panel visual para generar y registrar API keys |
+| `GET` | `/mcp/capabilities` | Capacidades de integración tipo MCP |
 | `GET` | `/docs` | Swagger UI interactivo |
 | `POST` | `/ingest` | Ingesta documentos |
 | `POST` | `/ask` | Pregunta al sistema RAG |
@@ -87,6 +100,30 @@ curl http://localhost:8000/health
 | `DELETE` | `/admin/keys/{id}` | Desactiva key (admin) |
 | `GET` | `/collections` | Lista colecciones |
 | `DELETE` | `/collection/{name}` | Elimina una colección |
+
+## 🧩 Arquitectura
+
+La API está organizada por dominios y capas:
+
+- `public`: health, UI y capacidades de descubrimiento.
+- `collaborator`: consultas RAG, colecciones y sesiones de chat.
+- `admin`: gobierno de API keys.
+- `core/state`: singletons compartidos para evitar inicialización dispersa.
+- `api/schemas`: contratos de entrada/salida explícitos.
+
+Esto facilita mantenimiento, testing y escalado de nuevos módulos.
+
+## 🔌 MCP-ready
+
+Se agregó `GET /mcp/capabilities` que expone un manifiesto de herramientas consumible por gateways o agentes.
+
+Ejemplo:
+
+```bash
+curl http://localhost:8000/mcp/capabilities
+```
+
+El manifiesto describe herramientas disponibles y su correspondencia HTTP (`/ask`, `/chats`, `/admin/keys`).
 
 ---
 

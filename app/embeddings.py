@@ -20,21 +20,34 @@ class EmbeddingClient:
         if not self.model:
             logger.warning('No EMBEDDING_MODEL configurado o está vacío. El pipeline funcionará solo con LLM.')
 
+    async def _embed_single(self, client: httpx.AsyncClient, text: str) -> list[float]:
+        """Compatibilidad con versiones de Ollama que usan /api/embeddings o /api/embed."""
+        payload = {"model": self.model, "prompt": text}
+        resp = await client.post(f"{self.base_url}/api/embeddings", json=payload)
+
+        if resp.status_code == 404:
+            # Fallback para instalaciones donde /api/embeddings no existe.
+            resp = await client.post(f"{self.base_url}/api/embed", json={"model": self.model, "input": text})
+
+        resp.raise_for_status()
+        data = resp.json()
+
+        embedding = data.get("embedding")
+        if embedding:
+            return embedding
+
+        embeddings = data.get("embeddings")
+        if isinstance(embeddings, list) and embeddings:
+            first = embeddings[0]
+            if isinstance(first, list) and first:
+                return first
+
+        raise ValueError(f"Ollama no retornó embedding para el modelo '{self.model}'.")
+
     async def embed(self, text: str) -> list[float]:
         """Genera el embedding de un único texto."""
         async with httpx.AsyncClient(timeout=self.timeout) as client:
-            resp = await client.post(
-                f"{self.base_url}/api/embeddings",
-                json={"model": self.model, "prompt": text}
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            embedding = data.get("embedding")
-
-            if not embedding:
-                raise ValueError(f"Ollama no retornó embedding para el modelo '{self.model}'.")
-
-            return embedding
+            return await self._embed_single(client, text)
 
     async def embed_batch(self, texts: list[str]) -> list[list[float]]:
         """
@@ -46,19 +59,7 @@ class EmbeddingClient:
 
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             for i, text in enumerate(texts):
-                resp = await client.post(
-                    f"{self.base_url}/api/embeddings",
-                    json={"model": self.model, "prompt": text}
-                )
-                resp.raise_for_status()
-                data = resp.json()
-                embedding = data.get("embedding")
-
-                if not embedding:
-                    raise ValueError(
-                        f"No se obtuvo embedding para el chunk {i}. "
-                        f"¿Está el modelo '{self.model}' descargado en Ollama?"
-                    )
+                embedding = await self._embed_single(client, text)
 
                 embeddings.append(embedding)
 

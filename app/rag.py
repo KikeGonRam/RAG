@@ -77,7 +77,17 @@ class RAGPipeline:
             }
 
         # 1. Embedding de la pregunta
-        query_embedding = await self.embedder.embed(question)
+        try:
+            query_embedding = await self.embedder.embed(question)
+        except Exception as exc:
+            logger.warning("Embeddings no disponibles, se usa fallback LLM-only: %s", exc)
+            answer = await self.llm.chat(question)
+            return {
+                "answer": answer,
+                "sources": [],
+                "context_used": 0,
+                "warning": "Embeddings no disponibles, respuesta generada sin contexto vectorial.",
+            }
 
         # 2. Búsqueda vectorial en ChromaDB
         results = self.vectorstore.query(
@@ -122,7 +132,14 @@ class RAGPipeline:
             yield "data: [DONE]\n\n"
             return
 
-        query_embedding = await self.embedder.embed(question)
+        try:
+            query_embedding = await self.embedder.embed(question)
+        except Exception as exc:
+            logger.warning("Embeddings no disponibles en streaming, fallback LLM-only: %s", exc)
+            async for token in self.llm.chat_stream(question):
+                yield f"data: {token}\n\n"
+            yield "data: [DONE]\n\n"
+            return
         results = self.vectorstore.query(
             collection=collection,
             query_embedding=query_embedding,

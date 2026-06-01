@@ -72,8 +72,8 @@ async def require_admin_password(
     expected = settings.ADMIN_PANEL_PASSWORD.strip()
     if not expected:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="ADMIN_PANEL_PASSWORD no configurado.",
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Panel de administracion deshabilitado: configura ADMIN_PANEL_PASSWORD.",
         )
 
     if not admin_password or not hmac.compare_digest(admin_password, expected):
