@@ -44,6 +44,39 @@ class EmbeddingClient:
 
         raise ValueError(f"Ollama no retornó embedding para el modelo '{self.model}'.")
 
+    async def diagnostics(self) -> dict:
+        """Estado operativo del proveedor de embeddings para observabilidad/debug."""
+        if not self.model:
+            return {
+                "enabled": False,
+                "status": "disabled",
+                "model": None,
+                "base_url": self.base_url,
+                "endpoint": None,
+                "detail": "EMBEDDING_MODEL no configurado.",
+            }
+
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            try:
+                await self._embed_single(client, "diagnostic probe")
+                return {
+                    "enabled": True,
+                    "status": "ok",
+                    "model": self.model,
+                    "base_url": self.base_url,
+                    "endpoint": "auto(/api/embeddings|/api/embed)",
+                    "detail": "Proveedor de embeddings operativo.",
+                }
+            except Exception as exc:
+                return {
+                    "enabled": True,
+                    "status": "degraded",
+                    "model": self.model,
+                    "base_url": self.base_url,
+                    "endpoint": "auto(/api/embeddings|/api/embed)",
+                    "detail": str(exc),
+                }
+
     async def embed(self, text: str) -> list[float]:
         """Genera el embedding de un único texto."""
         async with httpx.AsyncClient(timeout=self.timeout) as client:

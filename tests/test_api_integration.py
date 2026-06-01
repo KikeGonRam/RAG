@@ -24,9 +24,20 @@ class _StubVectorStore:
 class _StubRag:
     def __init__(self) -> None:
         self.vectorstore = _StubVectorStore()
+        self.embedder = self
 
     async def health_check(self) -> dict:
         return {"ollama": True, "chromadb": True, "status": "ok"}
+
+    async def diagnostics(self) -> dict:
+        return {
+            "enabled": True,
+            "status": "ok",
+            "model": "stub-embed",
+            "base_url": "http://stub",
+            "endpoint": "auto",
+            "detail": "ok",
+        }
 
     async def ingest(self, texts: list[str], collection: str = "default") -> int:
         _ = collection
@@ -39,6 +50,8 @@ class _StubRag:
             "answer": f"Echo: {question}",
             "sources": [],
             "context_used": 0,
+            "mode": "llm_only",
+            "warning": "stub",
         }
 
     async def ask_stream(self, question: str, collection: str = "default", top_k: int = 4):
@@ -198,6 +211,7 @@ def test_ask_creates_session_and_messages(client: TestClient) -> None:
     ask_data = ask_res.json()
     assert ask_data["answer"].startswith("Echo:")
     assert ask_data["session_id"] == 1
+    assert ask_data["mode"] == "llm_only"
 
     chats_res = client.get("/chats", headers=headers)
     assert chats_res.status_code == 200
@@ -227,3 +241,10 @@ def test_ingest_rate_limit_returns_429_after_threshold(client: TestClient) -> No
     assert r1.status_code == 200
     assert r2.status_code == 200
     assert r3.status_code == 429
+
+
+def test_embeddings_status_endpoint(client: TestClient) -> None:
+    res = client.get("/embeddings/status")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["status"] == "ok"

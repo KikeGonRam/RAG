@@ -27,6 +27,8 @@ class AskResponse(BaseModel):
     answer: str
     sources: list[str]
     context_used: int
+    mode: str
+    warning: Optional[str] = None
     session_id: int
 
 

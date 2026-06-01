@@ -88,6 +88,7 @@ curl http://localhost:8000/health
 | `GET` | `/live` | Liveness probe (proceso vivo) |
 | `GET` | `/ready` | Readiness probe (dependencias listas) |
 | `GET` | `/metrics` | Métricas Prometheus |
+| `GET` | `/embeddings/status` | Diagnóstico del proveedor de embeddings |
 | `GET` | `/ui` | Interfaz visual para colaboradores |
 | `GET` | `/admin` | Panel visual para generar y registrar API keys |
 | `GET` | `/mcp/capabilities` | Capacidades de integración tipo MCP |
@@ -277,6 +278,31 @@ Ejemplos:
 curl -i http://localhost:8000/live
 curl -i http://localhost:8000/ready
 curl -s http://localhost:8000/metrics | head -n 20
+curl -s http://localhost:8000/embeddings/status
+```
+
+## 🧠 Calidad RAG (Fase 4)
+
+Mejoras incorporadas para control de calidad de respuesta:
+
+- `mode` explícito en `/ask`:
+  - `rag`: respuesta con contexto vectorial
+  - `llm_only`: respuesta sin contexto vectorial (fallback)
+- `warning` opcional cuando ocurre degradación de embeddings.
+- Reordenamiento básico de chunks recuperados por overlap léxico + distancia.
+- Diagnóstico operativo de embeddings en `/embeddings/status`.
+
+Ejemplo de respuesta `/ask`:
+
+```json
+{
+  "answer": "...",
+  "sources": ["..."],
+  "context_used": 2,
+  "mode": "rag",
+  "warning": null,
+  "session_id": 12
+}
 ```
 
 ### Acceso para colaboradores con API keys

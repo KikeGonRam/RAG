@@ -14,6 +14,10 @@ from app.utils import chunk_text
 logger = logging.getLogger(__name__)
 
 
+def _token_set(text: str) -> set[str]:
+    return {tok for tok in text.lower().split() if tok}
+
+
 class RAGPipeline:
     def __init__(self):
         self.vectorstore = VectorStore()
@@ -73,7 +77,9 @@ class RAGPipeline:
             return {
                 "answer": answer,
                 "sources": [],
-                "context_used": 0
+                "context_used": 0,
+                "mode": "llm_only",
+                "warning": "Embeddings deshabilitados en configuración.",
             }
 
         # 1. Embedding de la pregunta
@@ -86,6 +92,7 @@ class RAGPipeline:
                 "answer": answer,
                 "sources": [],
                 "context_used": 0,
+                "mode": "llm_only",
                 "warning": "Embeddings no disponibles, respuesta generada sin contexto vectorial.",
             }
 
@@ -100,10 +107,16 @@ class RAGPipeline:
             return {
                 "answer": "No encontré información relevante en la base de conocimiento.",
                 "sources": [],
-                "context_used": 0
+                "context_used": 0,
+                "mode": "rag",
+                "warning": "No hubo contexto relevante para la consulta.",
             }
 
-        context_chunks = results["documents"]
+        context_chunks = self._rerank_documents(
+            question=question,
+            documents=results.get("documents", []),
+            distances=results.get("distances", []),
+        )
         context_text = "\n\n---\n\n".join(context_chunks)
 
         # 3. Prompt augmentation
@@ -115,7 +128,9 @@ class RAGPipeline:
         return {
             "answer": answer,
             "sources": context_chunks,
-            "context_used": len(context_chunks)
+            "context_used": len(context_chunks),
+            "mode": "rag",
+            "warning": None,
         }
 
     # ── Ask (streaming) ───────────────────────────────────────────────────────
@@ -173,3 +188,27 @@ PREGUNTA:
 {question}
 
 RESPUESTA:"""
+
+    @staticmethod
+    def _rerank_documents(question: str, documents: list[str], distances: list[float]) -> list[str]:
+        """Reordena chunks por overlap léxico y luego por similitud vectorial."""
+        if not documents:
+            return []
+
+        q_tokens = _token_set(question)
+        rows = []
+        seen: set[str] = set()
+
+        for i, doc in enumerate(documents):
+            clean = (doc or "").strip()
+            if not clean or clean in seen:
+                continue
+            seen.add(clean)
+
+            d_tokens = _token_set(clean)
+            overlap = len(q_tokens & d_tokens)
+            distance = distances[i] if i < len(distances) else 1.0
+            rows.append((overlap, distance, clean))
+
+        rows.sort(key=lambda item: (-item[0], item[1]))
+        return [doc for _, _, doc in rows]

@@ -68,6 +68,8 @@ async def ask(req: AskRequest, collaborator_id: str = Depends(get_collaborator_i
         )
 
         result = await rag.ask(question=req.question, collection=req.collection, top_k=req.top_k)
+        result.setdefault("mode", "llm_only" if result.get("context_used", 0) == 0 else "rag")
+        result.setdefault("warning", None)
 
         chat_store.add_message(
             collaborator_id=collaborator_id,

@@ -41,9 +41,16 @@ async def live():
 @router.get("/ready")
 async def ready():
     status = await rag.health_check()
+    embed_status = await rag.embedder.diagnostics()
+    status["embeddings"] = embed_status
     if not status["ollama"] or not status["chromadb"]:
         raise HTTPException(status_code=503, detail=status)
     return status
+
+
+@router.get("/embeddings/status")
+async def embeddings_status():
+    return await rag.embedder.diagnostics()
 
 
 @router.get("/metrics", include_in_schema=False)
