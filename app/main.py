@@ -1,8 +1,16 @@
+import logging
+import time
+import uuid
+
 from fastapi import FastAPI
+from fastapi import Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.router import api_router
 from app.config import settings
+from app.observability import observe_http_request
+
+logger = logging.getLogger(__name__)
 
 
 def _validate_security_configuration(origins: list[str]) -> None:
@@ -39,4 +47,36 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=settings.cors_headers() or ["*"],
 )
+
+
+@app.middleware("http")
+async def request_context_middleware(request: Request, call_next):
+    request_id_header = settings.REQUEST_ID_HEADER_NAME
+    request_id = request.headers.get(request_id_header) or str(uuid.uuid4())
+    request.state.request_id = request_id
+
+    status_code = 500
+    started = time.perf_counter()
+    route_path = request.url.path
+
+    try:
+        response = await call_next(request)
+        status_code = response.status_code
+        route = request.scope.get("route")
+        route_path = getattr(route, "path", request.url.path)
+        response.headers[request_id_header] = request_id
+        return response
+    finally:
+        elapsed = time.perf_counter() - started
+        observe_http_request(request.method, route_path, status_code, elapsed)
+        if settings.ACCESS_LOG_ENABLED:
+            logger.info(
+                "request_id=%s method=%s path=%s status=%s duration_ms=%.2f",
+                request_id,
+                request.method,
+                route_path,
+                status_code,
+                elapsed * 1000,
+            )
+
 app.include_router(api_router)

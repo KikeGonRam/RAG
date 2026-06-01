@@ -47,6 +47,11 @@ class Settings(BaseSettings):
     RATE_LIMIT_REQUESTS_PER_MINUTE: int = 30
     RATE_LIMIT_WINDOW_SECONDS: int = 60
 
+    # Observabilidad
+    METRICS_ENABLED: bool = True
+    REQUEST_ID_HEADER_NAME: str = "X-Request-Id"
+    ACCESS_LOG_ENABLED: bool = True
+
     def is_production(self) -> bool:
         return self.APP_ENV.strip().lower() in {"production", "prod"}
 

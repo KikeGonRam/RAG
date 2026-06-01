@@ -85,6 +85,9 @@ curl http://localhost:8000/health
 | -------- | ---- | ----------- |
 | `GET` | `/` | Info del servidor |
 | `GET` | `/health` | Estado de Ollama y ChromaDB |
+| `GET` | `/live` | Liveness probe (proceso vivo) |
+| `GET` | `/ready` | Readiness probe (dependencias listas) |
+| `GET` | `/metrics` | Métricas Prometheus |
 | `GET` | `/ui` | Interfaz visual para colaboradores |
 | `GET` | `/admin` | Panel visual para generar y registrar API keys |
 | `GET` | `/mcp/capabilities` | Capacidades de integración tipo MCP |
@@ -221,6 +224,9 @@ Variables de entorno disponibles en `.env`:
 | `RATE_LIMIT_ENABLED` | `true` | Activa rate limiting básico |
 | `RATE_LIMIT_REQUESTS_PER_MINUTE` | `30` | Máximo por ventana y ruta |
 | `RATE_LIMIT_WINDOW_SECONDS` | `60` | Duración de ventana de rate limit |
+| `METRICS_ENABLED` | `true` | Habilita endpoint de métricas Prometheus |
+| `REQUEST_ID_HEADER_NAME` | `X-Request-Id` | Header de correlación request/response |
+| `ACCESS_LOG_ENABLED` | `true` | Activa access logs por request |
 
 ## 🔒 Hardening de producción (Fase 1)
 
@@ -252,6 +258,25 @@ CORS_ALLOWED_HEADERS=Content-Type,X-API-Key,X-Admin-Password
 RATE_LIMIT_ENABLED=true
 RATE_LIMIT_REQUESTS_PER_MINUTE=30
 RATE_LIMIT_WINDOW_SECONDS=60
+```
+
+## 📈 Observabilidad (Fase 3)
+
+Se agregó observabilidad base para operación en producción:
+
+- Header de correlación por request (`X-Request-Id` por defecto).
+- Access logs por request con latencia y código de estado.
+- Métricas Prometheus en `/metrics`.
+- Endpoints separados de salud:
+  - `GET /live` para liveness
+  - `GET /ready` para readiness
+
+Ejemplos:
+
+```bash
+curl -i http://localhost:8000/live
+curl -i http://localhost:8000/ready
+curl -s http://localhost:8000/metrics | head -n 20
 ```
 
 ### Acceso para colaboradores con API keys

@@ -72,6 +72,9 @@ services:
       - RATE_LIMIT_ENABLED=${RATE_LIMIT_ENABLED:-true}
       - RATE_LIMIT_REQUESTS_PER_MINUTE=${RATE_LIMIT_REQUESTS_PER_MINUTE:-30}
       - RATE_LIMIT_WINDOW_SECONDS=${RATE_LIMIT_WINDOW_SECONDS:-60}
+      - METRICS_ENABLED=${METRICS_ENABLED:-true}
+      - REQUEST_ID_HEADER_NAME=${REQUEST_ID_HEADER_NAME:-X-Request-Id}
+      - ACCESS_LOG_ENABLED=${ACCESS_LOG_ENABLED:-true}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
