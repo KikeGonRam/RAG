@@ -148,6 +148,7 @@ def _settings_guard() -> Generator[None, None, None]:
         "RATE_LIMIT_ENABLED",
         "RATE_LIMIT_REQUESTS_PER_MINUTE",
         "RATE_LIMIT_WINDOW_SECONDS",
+        "RAG_MODE_REQUIRED",
     ]
     snapshot = {field: getattr(settings, field) for field in fields}
     yield
@@ -248,3 +249,54 @@ def test_embeddings_status_endpoint(client: TestClient) -> None:
     assert res.status_code == 200
     data = res.json()
     assert data["status"] == "ok"
+
+
+def test_ready_returns_503_when_rag_required_and_embeddings_degraded(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import app.api.routes.public as public_routes
+
+    settings.RAG_MODE_REQUIRED = True
+
+    async def degraded_diag() -> dict:
+        return {
+            "enabled": True,
+            "status": "degraded",
+            "model": "stub-embed",
+            "base_url": "http://stub",
+            "endpoint": "auto",
+            "detail": "down",
+        }
+
+    monkeypatch.setattr(public_routes.rag.embedder, "diagnostics", degraded_diag)
+    res = client.get("/ready")
+    assert res.status_code == 503
+
+
+def test_ask_returns_503_when_rag_required_and_embeddings_degraded(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import app.api.routes.collab as collab_routes
+
+    settings.RAG_MODE_REQUIRED = True
+    settings.API_KEY_ENABLED = True
+    settings.API_KEYS = "demo-key"
+    security._allowed_keys.cache_clear()
+
+    async def degraded_diag() -> dict:
+        return {
+            "enabled": True,
+            "status": "degraded",
+            "model": "stub-embed",
+            "base_url": "http://stub",
+            "endpoint": "auto",
+            "detail": "down",
+        }
+
+    monkeypatch.setattr(collab_routes.rag.embedder, "diagnostics", degraded_diag)
+    payload = {"question": "hola", "collection": "default", "top_k": 1, "stream": False}
+    headers = {"X-API-Key": "demo-key"}
+    res = client.post("/ask", json=payload, headers=headers)
+    assert res.status_code == 503

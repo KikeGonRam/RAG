@@ -43,6 +43,13 @@ async def ready():
     status = await rag.health_check()
     embed_status = await rag.embedder.diagnostics()
     status["embeddings"] = embed_status
+
+    if settings.RAG_MODE_REQUIRED and embed_status.get("status") != "ok":
+        raise HTTPException(status_code=503, detail={
+            **status,
+            "reason": "RAG_MODE_REQUIRED activo y embeddings no disponible",
+        })
+
     if not status["ollama"] or not status["chromadb"]:
         raise HTTPException(status_code=503, detail=status)
     return status

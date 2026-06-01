@@ -228,6 +228,7 @@ Variables de entorno disponibles en `.env`:
 | `METRICS_ENABLED` | `true` | Habilita endpoint de métricas Prometheus |
 | `REQUEST_ID_HEADER_NAME` | `X-Request-Id` | Header de correlación request/response |
 | `ACCESS_LOG_ENABLED` | `true` | Activa access logs por request |
+| `RAG_MODE_REQUIRED` | `false` | Si es `true`, bloquea fallback a `llm_only` |
 
 ## 🔒 Hardening de producción (Fase 1)
 
@@ -304,6 +305,21 @@ Ejemplo de respuesta `/ask`:
   "session_id": 12
 }
 ```
+
+### Modo estricto de despliegue RAG
+
+Si quieres bloquear despliegues degradados (sin embeddings operativo), activa:
+
+```env
+RAG_MODE_REQUIRED=true
+```
+
+Con esta bandera:
+
+- `GET /ready` responde `503` si embeddings no está en estado `ok`.
+- `POST /ask` responde `503` si el sistema tendría que responder en `llm_only`.
+
+Esto fuerza operación estricta de RAG en producción.
 
 ### Acceso para colaboradores con API keys
 

@@ -52,6 +52,9 @@ class Settings(BaseSettings):
     REQUEST_ID_HEADER_NAME: str = "X-Request-Id"
     ACCESS_LOG_ENABLED: bool = True
 
+    # Calidad RAG
+    RAG_MODE_REQUIRED: bool = False
+
     def is_production(self) -> bool:
         return self.APP_ENV.strip().lower() in {"production", "prod"}
 

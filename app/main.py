@@ -30,6 +30,11 @@ def _validate_security_configuration(origins: list[str]) -> None:
             "En APP_ENV=production no se permite CORS wildcard. Define CORS_ALLOWED_ORIGINS.",
         )
 
+    if settings.RAG_MODE_REQUIRED and not settings.EMBEDDING_MODEL:
+        raise RuntimeError(
+            "En APP_ENV=production con RAG_MODE_REQUIRED=true debes configurar EMBEDDING_MODEL.",
+        )
+
 app = FastAPI(
     title="RAG Ollama API",
     description="Sistema RAG local con arquitectura modular y capacidades MCP-ready",

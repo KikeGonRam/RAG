@@ -75,6 +75,7 @@ services:
       - METRICS_ENABLED=${METRICS_ENABLED:-true}
       - REQUEST_ID_HEADER_NAME=${REQUEST_ID_HEADER_NAME:-X-Request-Id}
       - ACCESS_LOG_ENABLED=${ACCESS_LOG_ENABLED:-true}
+      - RAG_MODE_REQUIRED=${RAG_MODE_REQUIRED:-false}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:

@@ -12,6 +12,7 @@ from app.api.schemas import (
     IngestRequest,
     IngestResponse,
 )
+from app.config import settings
 from app.core.state import chat_store, rag
 from app.security import enforce_collab_rate_limit, get_collaborator_id, require_api_key
 
@@ -45,6 +46,14 @@ async def ask(req: AskRequest, collaborator_id: str = Depends(get_collaborator_i
         raise HTTPException(status_code=400, detail="La pregunta no puede estar vacia.")
 
     try:
+        if settings.RAG_MODE_REQUIRED:
+            embed_status = await rag.embedder.diagnostics()
+            if embed_status.get("status") != "ok":
+                raise HTTPException(
+                    status_code=503,
+                    detail="RAG_MODE_REQUIRED activo: embeddings no disponible.",
+                )
+
         if req.stream:
             generator = rag.ask_stream(question=req.question, collection=req.collection, top_k=req.top_k)
             return StreamingResponse(generator, media_type="text/event-stream")
@@ -70,6 +79,12 @@ async def ask(req: AskRequest, collaborator_id: str = Depends(get_collaborator_i
         result = await rag.ask(question=req.question, collection=req.collection, top_k=req.top_k)
         result.setdefault("mode", "llm_only" if result.get("context_used", 0) == 0 else "rag")
         result.setdefault("warning", None)
+
+        if settings.RAG_MODE_REQUIRED and result.get("mode") != "rag":
+            raise HTTPException(
+                status_code=503,
+                detail="RAG_MODE_REQUIRED activo: no se permite respuesta LLM-only.",
+            )
 
         chat_store.add_message(
             collaborator_id=collaborator_id,
