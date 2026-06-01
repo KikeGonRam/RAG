@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RAG Assistant - Bausen</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700&display=swap");
+
+    :root {
+      --bg: #f3f6fb;
+      --card: #ffffff;
+      --ink: #14213d;
+      --muted: #5c6b8a;
+      --brand: #0f4cbd;
+      --brand-2: #1f6bff;
+      --ok: #127a3f;
+      --bad: #a11f1f;
+      --line: #d9e1f1;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Manrope", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 450px at 10% -10%, #dce9ff 0%, transparent 55%),
+        radial-gradient(800px 420px at 90% 0%, #e9f0ff 0%, transparent 50%),
+        var(--bg);
+      min-height: 100vh;
+    }
+
+    .wrap {
+      max-width: 1180px;
+      margin: 24px auto;
+      padding: 0 16px;
+    }
+
+    .hero-banner {
+      background: linear-gradient(120deg, var(--brand), var(--brand-2));
+      color: #fff;
+      border-radius: 16px;
+      padding: 18px 20px;
+      box-shadow: 0 12px 30px rgba(15, 76, 189, 0.25);
+      margin-bottom: 14px;
+    }
+
+    .hero-banner h1 {
+      margin: 0 0 8px;
+      font-size: 22px;
+      letter-spacing: 0.2px;
+    }
+
+    .hero-banner p {
+      margin: 0;
+      opacity: 0.95;
+      line-height: 1.45;
+      font-size: 14px;
+    }
+
+    .shell {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 14px;
+      min-height: 72vh;
+    }
+
+    .sidebar,
+    .chat-panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(20, 33, 61, 0.09);
+    }
+
+    .sidebar {
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .block {
+      background: #f9fbff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+    }
+
+    .block h2 {
+      margin: 0 0 8px;
+      font-size: 13px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin: 0 0 6px;
+    }
+
+    input, textarea, select, button {
+      width: 100%;
+      border-radius: 11px;
+      border: 1px solid var(--line);
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    input, textarea, select {
+      padding: 10px 12px;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      outline: 2px solid rgba(31, 107, 255, 0.25);
+      border-color: #9db9ff;
+    }
+
+    textarea {
+      min-height: 70px;
+      max-height: 180px;
+      resize: none;
+      line-height: 1.45;
+    }
+
+    button {
+      padding: 10px 12px;
+      background: var(--brand);
+      color: #fff;
+      border: 0;
+      cursor: pointer;
+      font-weight: 700;
+      transition: transform 0.08s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 8px 16px rgba(15, 76, 189, 0.25);
+    }
+
+    button:hover { opacity: 0.95; box-shadow: 0 10px 20px rgba(15, 76, 189, 0.3); }
+    button:active { transform: translateY(1px); }
+
+    .secondary {
+      background: #5c6b8a;
+      box-shadow: 0 8px 16px rgba(92, 107, 138, 0.25);
+    }
+
+    .status-pill {
+      font-size: 13px;
+      color: var(--muted);
+      background: #f5f8ff;
+      border: 1px dashed #b8caeb;
+      border-radius: 999px;
+      padding: 8px 10px;
+      margin-top: 8px;
+    }
+
+    .status {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .ok { color: var(--ok); }
+    .bad { color: var(--bad); }
+
+    .chat-panel {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      overflow: hidden;
+    }
+
+    .chat-head {
+      border-bottom: 1px solid var(--line);
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+    }
+
+    .chat-head h2 {
+      margin: 0;
+      font-size: 17px;
+    }
+
+    .chat-head .hint {
+      margin: 2px 0 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .chat {
+      padding: 16px;
+      overflow: auto;
+      background: linear-gradient(180deg, #f8fbff 0%, #fdfdff 100%);
+    }
+
+    .msg {
+      margin-bottom: 12px;
+      max-width: min(78%, 720px);
+      padding: 11px 13px;
+      border-radius: 16px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      animation: slideIn 0.24s ease;
+      box-shadow: 0 4px 14px rgba(20, 33, 61, 0.08);
+    }
+
+    .user {
+      margin-left: auto;
+      background: linear-gradient(120deg, #e7f0ff 0%, #ddebff 100%);
+      border: 1px solid #bfd4ff;
+      border-bottom-right-radius: 6px;
+    }
+
+    .bot {
+      margin-right: auto;
+      background: #ffffff;
+      border: 1px solid #e2e8f6;
+      border-bottom-left-radius: 6px;
+    }
+
+    .meta {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+      border-top: 1px dashed #e4ebf9;
+      padding-top: 6px;
+    }
+
+    .composer {
+      border-top: 1px solid var(--line);
+      padding: 12px;
+      background: #fff;
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 8px;
+      align-items: end;
+    }
+
+    .composer .actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .composer button {
+      width: auto;
+      min-width: 128px;
+    }
+
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+      padding: 24px 12px;
+      border: 1px dashed #cfdcf4;
+      background: #f5f9ff;
+      border-radius: 12px;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 980px) {
+      .shell {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        order: 2;
+      }
+
+      .chat-panel {
+        order: 1;
+        min-height: 72vh;
+      }
+
+      .composer {
+        grid-template-columns: 1fr;
+      }
+
+      .composer .actions {
+        width: 100%;
+      }
+
+      .composer .actions button {
+        flex: 1;
+      }
+
+      .msg {
+        max-width: 92%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero-banner">
+      <h1>RAG Assistant</h1>
+      <p>Interfaz para colaboradores. Mantiene seguridad por API Key y te permite consultar documentos en formato chat.</p>
+    </section>
+
+    <main class="shell">
+      <aside class="sidebar">
+        <section class="block">
+          <h2>Sesion</h2>
+          <div class="field">
+            <label for="apiKey">API Key</label>
+            <input id="apiKey" type="password" placeholder="colab_xxx..." />
+          </div>
+
+          <div class="field" style="margin-top:10px;">
+            <label for="collection">Collection</label>
+            <input id="collection" type="text" value="default" />
+          </div>
+
+          <button id="healthBtn" type="button" style="margin-top:10px;">Ver estado</button>
+
+          <div class="status-pill">
+            <span class="status" id="statusText">Estado: sin verificar.</span>
+          </div>
+        </section>
+
+        <section class="block">
+          <h2>Conversaciones</h2>
+          <div class="field">
+            <label for="chatSelect">Selecciona chat</label>
+            <select id="chatSelect">
+              <option value="">(Sin seleccionar)</option>
+            </select>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:10px;">
+            <button id="newChatBtn" type="button">Nuevo chat</button>
+            <button id="refreshChatsBtn" type="button" class="secondary">Recargar</button>
+          </div>
+
+          <button id="deleteChatBtn" type="button" class="secondary" style="margin-top:8px;">Eliminar chat</button>
+          <div class="status" style="margin-top:10px;">Tip: cada API key ve solo sus propias conversaciones.</div>
+        </section>
+      </aside>
+
+      <section class="chat-panel">
+        <header class="chat-head">
+          <div>
+            <h2>Chat de consulta</h2>
+            <p class="hint">Respuestas basadas en los documentos indexados</p>
+          </div>
+        </header>
+
+        <div class="chat" id="chat">
+          <div class="empty" id="emptyState">Todavia no hay mensajes. Haz una pregunta para iniciar la conversacion.</div>
+        </div>
+
+        <footer class="composer">
+          <div class="field" style="margin:0;">
+            <label for="question">Pregunta</label>
+            <textarea id="question" placeholder="Escribe una pregunta para el asistente..."></textarea>
+          </div>
+          <div class="actions">
+            <button id="askBtn" type="button">Enviar</button>
+            <button id="clearBtn" type="button" class="secondary">Limpiar</button>
+          </div>
+        </footer>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const statusText = document.getElementById("statusText");
+    const healthBtn = document.getElementById("healthBtn");
+    const askBtn = document.getElementById("askBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const newChatBtn = document.getElementById("newChatBtn");
+    const refreshChatsBtn = document.getElementById("refreshChatsBtn");
+    const deleteChatBtn = document.getElementById("deleteChatBtn");
+    const chatSelect = document.getElementById("chatSelect");
+    const apiKeyInput = document.getElementById("apiKey");
+    const questionInput = document.getElementById("question");
+    const collectionInput = document.getElementById("collection");
+    const chat = document.getElementById("chat");
+    let currentSessionId = null;
+
+    function apiHeaders() {
+      const headers = { "Content-Type": "application/json" };
+      const apiKey = apiKeyInput.value.trim();
+      if (apiKey) {
+        headers["X-API-Key"] = apiKey;
+      }
+      return headers;
+    }
+
+    function showEmptyState(message) {
+      chat.innerHTML = "";
+      const empty = document.createElement("div");
+      empty.className = "empty";
+      empty.id = "emptyState";
+      empty.textContent = message || "Todavia no hay mensajes. Haz una pregunta para iniciar la conversacion.";
+      chat.appendChild(empty);
+    }
+
+    function hideEmptyState() {
+      const emptyState = document.getElementById("emptyState");
+      if (emptyState) emptyState.remove();
+    }
+
+    function addMessage(kind, text, meta = "") {
+      hideEmptyState();
+      const div = document.createElement("div");
+      div.className = "msg " + (kind === "user" ? "user" : "bot");
+      div.textContent = text;
+      if (meta) {
+        const m = document.createElement("div");
+        m.className = "meta";
+        m.textContent = meta;
+        div.appendChild(m);
+      }
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    async function checkHealth() {
+      statusText.textContent = "Estado: verificando...";
+      statusText.className = "status";
+      try {
+        const res = await fetch("/health");
+        if (!res.ok) {
+          const txt = await res.text();
+          throw new Error(txt || "Error de health");
+        }
+        const data = await res.json();
+        statusText.textContent = "Estado: API OK | Ollama: " + data.ollama + " | Chroma: " + data.chromadb;
+        statusText.classList.add("ok");
+      } catch (err) {
+        statusText.textContent = "Estado: error - " + err.message;
+        statusText.classList.add("bad");
+      }
+    }
+
+    function formatChatLabel(item) {
+      const stamp = item.updated_at || item.created_at || "";
+      return item.title + (stamp ? " - " + stamp.replace("T", " ") : "");
+    }
+
+    async function loadChats(selectId = null) {
+      try {
+        const res = await fetch("/chats", { headers: apiHeaders() });
+        const data = await res.json();
+        if (!res.ok) {
+          const detail = data.detail || "No fue posible cargar chats";
+          throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+        }
+
+        chatSelect.innerHTML = "";
+        const placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = data.length ? "Selecciona un chat" : "(Sin chats guardados)";
+        chatSelect.appendChild(placeholder);
+
+        for (const item of data) {
+          const option = document.createElement("option");
+          option.value = String(item.id);
+          option.textContent = formatChatLabel(item);
+          chatSelect.appendChild(option);
+        }
+
+        if (selectId) {
+          chatSelect.value = String(selectId);
+          currentSessionId = Number(selectId);
+        } else if (currentSessionId && data.some((x) => Number(x.id) === Number(currentSessionId))) {
+          chatSelect.value = String(currentSessionId);
+        } else {
+          currentSessionId = null;
+          chatSelect.value = "";
+        }
+      } catch (err) {
+        addMessage("bot", "No se pudo cargar la lista de chats: " + err.message);
+      }
+    }
+
+    async function createChat() {
+      try {
+        const title = "Chat " + new Date().toLocaleString();
+        const res = await fetch("/chats", {
+          method: "POST",
+          headers: apiHeaders(),
+          body: JSON.stringify({ title }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          const detail = data.detail || "No fue posible crear el chat";
+          throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+        }
+        currentSessionId = Number(data.id);
+        await loadChats(currentSessionId);
+        showEmptyState("Nuevo chat listo. Escribe tu primera pregunta.");
+      } catch (err) {
+        addMessage("bot", "No se pudo crear el chat: " + err.message);
+      }
+    }
+
+    async function loadMessages(sessionId) {
+      if (!sessionId) {
+        showEmptyState();
+        return;
+      }
+
+      try {
+        const res = await fetch(`/chats/${sessionId}/messages`, { headers: apiHeaders() });
+        const data = await res.json();
+        if (!res.ok) {
+          const detail = data.detail || "No fue posible cargar mensajes";
+          throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+        }
+
+        if (!data.length) {
+          showEmptyState("Este chat no tiene mensajes todavia.");
+          return;
+        }
+
+        chat.innerHTML = "";
+        for (const msg of data) {
+          const meta = msg.meta && Object.keys(msg.meta).length ? JSON.stringify(msg.meta) : "";
+          const kind = msg.role === "user" ? "user" : "bot";
+          addMessage(kind, msg.content, meta);
+        }
+      } catch (err) {
+        addMessage("bot", "No se pudo cargar el historial: " + err.message);
+      }
+    }
+
+    async function deleteCurrentChat() {
+      if (!currentSessionId) {
+        addMessage("bot", "Selecciona un chat antes de eliminar.");
+        return;
+      }
+      if (!window.confirm("Se eliminara este chat con todo su historial. Continuar?")) {
+        return;
+      }
+
+      try {
+        const res = await fetch(`/chats/${currentSessionId}`, {
+          method: "DELETE",
+          headers: apiHeaders(),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          const detail = data.detail || "No fue posible eliminar el chat";
+          throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+        }
+        currentSessionId = null;
+        await loadChats();
+        showEmptyState("Chat eliminado.");
+      } catch (err) {
+        addMessage("bot", "No se pudo eliminar el chat: " + err.message);
+      }
+    }
+
+    async function ask() {
+      const question = questionInput.value.trim();
+      const collection = collectionInput.value.trim() || "default";
+
+      if (!question) {
+        addMessage("bot", "Escribe una pregunta antes de enviar.");
+        return;
+      }
+
+      if (!currentSessionId) {
+        await createChat();
+      }
+
+      if (!currentSessionId) {
+        addMessage("bot", "No se pudo crear o seleccionar un chat.");
+        return;
+      }
+
+      addMessage("user", question, "Collection: " + collection);
+      questionInput.value = "";
+
+      try {
+        const res = await fetch("/ask", {
+          method: "POST",
+          headers: apiHeaders(),
+          body: JSON.stringify({
+            question,
+            collection,
+            top_k: 4,
+            stream: false,
+            session_id: currentSessionId,
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          const detail = data.detail || "Error desconocido";
+          throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+        }
+
+        currentSessionId = Number(data.session_id || currentSessionId);
+        await loadChats(currentSessionId);
+        const meta = "Contexto usado: " + data.context_used + " chunks";
+        addMessage("bot", data.answer || "(Sin respuesta)", meta);
+      } catch (err) {
+        addMessage("bot", "No se pudo procesar la pregunta: " + err.message);
+      }
+    }
+
+    healthBtn.addEventListener("click", checkHealth);
+    askBtn.addEventListener("click", ask);
+    newChatBtn.addEventListener("click", createChat);
+    refreshChatsBtn.addEventListener("click", () => loadChats(currentSessionId));
+    deleteChatBtn.addEventListener("click", deleteCurrentChat);
+    chatSelect.addEventListener("change", async () => {
+      const selected = Number(chatSelect.value || 0);
+      currentSessionId = selected || null;
+      await loadMessages(currentSessionId);
+    });
+    apiKeyInput.addEventListener("change", async () => {
+      currentSessionId = null;
+      await loadChats();
+      showEmptyState("API key cambiada. Selecciona o crea un chat.");
+    });
+
+    clearBtn.addEventListener("click", () => {
+      showEmptyState();
+    });
+
+    questionInput.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        ask();
+      }
+    });
+
+    showEmptyState();
+    loadChats();
+  </script>
+</body>
+</html>

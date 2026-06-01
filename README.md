@@ -73,9 +73,14 @@ curl http://localhost:8000/health
 |--------|------|-------------|
 | `GET` | `/` | Info del servidor |
 | `GET` | `/health` | Estado de Ollama y ChromaDB |
+| `GET` | `/ui` | Interfaz visual para colaboradores |
 | `GET` | `/docs` | Swagger UI interactivo |
 | `POST` | `/ingest` | Ingesta documentos |
 | `POST` | `/ask` | Pregunta al sistema RAG |
+| `GET` | `/chats` | Lista chats del colaborador |
+| `POST` | `/chats` | Crea un chat nuevo |
+| `GET` | `/chats/{id}/messages` | Historial del chat |
+| `DELETE` | `/chats/{id}` | Elimina un chat |
 | `GET` | `/collections` | Lista colecciones |
 | `DELETE` | `/collection/{name}` | Elimina una colección |
 
@@ -113,6 +118,7 @@ curl -X POST http://localhost:8000/ingest \
 
 ```bash
 curl -X POST http://localhost:8000/ask \
+  -H "X-API-Key: TU_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "question": "¿Qué es FastAPI y para qué sirve?",
@@ -125,6 +131,7 @@ curl -X POST http://localhost:8000/ask \
 
 ```bash
 curl -X POST http://localhost:8000/ask \
+  -H "X-API-Key: TU_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "question": "Explica qué es un embedding",
@@ -135,13 +142,15 @@ curl -X POST http://localhost:8000/ask \
 ### Ver colecciones
 
 ```bash
-curl http://localhost:8000/collections
+curl http://localhost:8000/collections \
+  -H "X-API-Key: TU_API_KEY"
 ```
 
 ### Eliminar colección
 
 ```bash
-curl -X DELETE http://localhost:8000/collection/default
+curl -X DELETE http://localhost:8000/collection/default \
+  -H "X-API-Key: TU_API_KEY"
 ```
 
 ---
@@ -151,7 +160,7 @@ curl -X DELETE http://localhost:8000/collection/default
 Variables de entorno disponibles en `.env`:
 
 | Variable | Default | Descripción |
-|----------|---------|-------------|
+| --------- | ------- | ----------- |
 | `OLLAMA_BASE_URL` | `http://ollama:11434` | URL de Ollama |
 | `OLLAMA_MODEL` | `qwen2.5:7b` | Modelo LLM |
 | `EMBEDDING_MODEL` | `nomic-embed-text` | Modelo de embeddings |
@@ -160,6 +169,52 @@ Variables de entorno disponibles en `.env`:
 | `CHUNK_OVERLAP` | `64` | Overlap entre chunks (chars) |
 | `LLM_TEMPERATURE` | `0.2` | Temperatura del LLM |
 | `LLM_CTX_WINDOW` | `4096` | Ventana de contexto |
+| `API_KEY_ENABLED` | `false` | Activa validación de API keys |
+| `API_KEYS` | `` | Lista de keys separadas por coma |
+| `API_KEY_HEADER_NAME` | `X-API-Key` | Nombre del header HTTP |
+
+### Acceso para colaboradores con API keys
+
+Si quieres compartir la API con colaboradores, activa API keys en `.env`.
+
+1. Genera una key por colaborador:
+
+```bash
+# Linux/macOS/Git Bash
+openssl rand -hex 32
+
+# PowerShell
+[guid]::NewGuid().ToString("N") + [guid]::NewGuid().ToString("N")
+```
+
+Tambien puedes generarlas en lote con Python:
+
+```bash
+python -m app.generate_api_keys --count 5
+```
+
+1. Configura `.env` con todas las keys:
+
+```env
+API_KEY_ENABLED=true
+API_KEYS=key_colaborador_1,key_colaborador_2,key_colaborador_3
+API_KEY_HEADER_NAME=X-API-Key
+```
+
+1. Reinicia la API:
+
+```bash
+docker compose up -d api
+```
+
+Endpoints protegidos por key:
+
+- `POST /ask`
+- `POST /ingest`
+- `GET /collections`
+- `DELETE /collection/{name}`
+
+`/` y `/health` quedan públicos para monitoreo.
 
 ---
 
@@ -213,7 +268,7 @@ docker exec -it rag-ollama ollama list
 
 ## 🏗️ Arquitectura RAG
 
-```
+```text
 ┌─────────────┐     POST /ingest      ┌──────────────┐
 │   Cliente   │ ──────────────────>   │   FastAPI    │
 │  (curl/JS)  │                       │   main.py    │

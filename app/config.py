@@ -22,6 +22,11 @@ class Settings(BaseSettings):
     CHUNK_SIZE: int = 512
     CHUNK_OVERLAP: int = 64
 
+    # API keys (acceso para colaboradores)
+    API_KEY_ENABLED: bool = False
+    API_KEYS: str = ""
+    API_KEY_HEADER_NAME: str = "X-API-Key"
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
