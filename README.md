@@ -74,6 +74,7 @@ curl http://localhost:8000/health
 | `GET` | `/` | Info del servidor |
 | `GET` | `/health` | Estado de Ollama y ChromaDB |
 | `GET` | `/ui` | Interfaz visual para colaboradores |
+| `GET` | `/admin` | Panel visual para generar y registrar API keys |
 | `GET` | `/docs` | Swagger UI interactivo |
 | `POST` | `/ingest` | Ingesta documentos |
 | `POST` | `/ask` | Pregunta al sistema RAG |
@@ -81,6 +82,9 @@ curl http://localhost:8000/health
 | `POST` | `/chats` | Crea un chat nuevo |
 | `GET` | `/chats/{id}/messages` | Historial del chat |
 | `DELETE` | `/chats/{id}` | Elimina un chat |
+| `GET` | `/admin/keys` | Lista keys registradas (admin) |
+| `POST` | `/admin/keys` | Genera y registra key (admin) |
+| `DELETE` | `/admin/keys/{id}` | Desactiva key (admin) |
 | `GET` | `/collections` | Lista colecciones |
 | `DELETE` | `/collection/{name}` | Elimina una colección |
 
@@ -170,14 +174,39 @@ Variables de entorno disponibles en `.env`:
 | `LLM_TEMPERATURE` | `0.2` | Temperatura del LLM |
 | `LLM_CTX_WINDOW` | `4096` | Ventana de contexto |
 | `API_KEY_ENABLED` | `false` | Activa validación de API keys |
-| `API_KEYS` | `` | Lista de keys separadas por coma |
+| `API_KEYS` | `` | Lista estática opcional de keys separadas por coma |
 | `API_KEY_HEADER_NAME` | `X-API-Key` | Nombre del header HTTP |
+| `ADMIN_PANEL_PASSWORD` | `` | Password del panel admin de keys |
+| `ADMIN_PASSWORD_HEADER_NAME` | `X-Admin-Password` | Header para endpoints admin |
 
 ### Acceso para colaboradores con API keys
 
-Si quieres compartir la API con colaboradores, activa API keys en `.env`.
+Si quieres compartir la API con colaboradores, activa API keys en `.env` y administra keys desde el panel.
 
-1. Genera una key por colaborador:
+1. Configura `.env`:
+
+```env
+API_KEY_ENABLED=true
+API_KEY_HEADER_NAME=X-API-Key
+ADMIN_PANEL_PASSWORD=TU_PASSWORD_ADMIN_SEGURA
+ADMIN_PASSWORD_HEADER_NAME=X-Admin-Password
+```
+
+1. Reinicia la API:
+
+```bash
+docker compose up -d --build api
+```
+
+1. Abre el panel admin:
+
+```text
+http://localhost:8000/admin
+```
+
+1. Genera una key por colaborador desde el panel.
+
+Opcionalmente puedes generar keys por terminal:
 
 ```bash
 # Linux/macOS/Git Bash
@@ -193,20 +222,6 @@ Tambien puedes generarlas en lote con Python:
 python -m app.generate_api_keys --count 5
 ```
 
-1. Configura `.env` con todas las keys:
-
-```env
-API_KEY_ENABLED=true
-API_KEYS=key_colaborador_1,key_colaborador_2,key_colaborador_3
-API_KEY_HEADER_NAME=X-API-Key
-```
-
-1. Reinicia la API:
-
-```bash
-docker compose up -d api
-```
-
 Endpoints protegidos por key:
 
 - `POST /ask`
@@ -215,6 +230,21 @@ Endpoints protegidos por key:
 - `DELETE /collection/{name}`
 
 `/` y `/health` quedan públicos para monitoreo.
+
+### Panel de administrador de keys
+
+Con `ADMIN_PANEL_PASSWORD` configurado, puedes administrar keys desde:
+
+```text
+http://localhost:8000/admin
+```
+
+Funciones del panel:
+
+- Generar key nueva por colaborador
+- Ver registro de keys activas/inactivas
+- Revisar `use_count` y `last_used_at`
+- Desactivar keys comprometidas o vencidas
 
 ---
 

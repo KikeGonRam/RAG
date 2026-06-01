@@ -5,18 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>RAG Assistant - Bausen</title>
   <style>
-    @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700&display=swap");
+    @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap");
 
     :root {
-      --bg: #f3f6fb;
-      --card: #ffffff;
-      --ink: #14213d;
-      --muted: #5c6b8a;
+      --bg: #f1f5fc;
+      --surface: #ffffff;
+      --surface-soft: #f8fbff;
+      --ink: #17253f;
+      --muted: #5f7296;
       --brand: #0f4cbd;
       --brand-2: #1f6bff;
+      --line: #dbe4f4;
       --ok: #127a3f;
       --bad: #a11f1f;
-      --line: #d9e1f1;
+      --shadow: 0 12px 28px rgba(19, 42, 88, 0.12);
     }
 
     * { box-sizing: border-box; }
@@ -26,88 +28,144 @@
       font-family: "Manrope", "Segoe UI", sans-serif;
       color: var(--ink);
       background:
-        radial-gradient(1200px 450px at 10% -10%, #dce9ff 0%, transparent 55%),
-        radial-gradient(800px 420px at 90% 0%, #e9f0ff 0%, transparent 50%),
+        radial-gradient(1000px 420px at 8% -5%, #d8e6ff 0%, transparent 55%),
+        radial-gradient(1000px 420px at 92% -20%, #e2ecff 0%, transparent 55%),
         var(--bg);
       min-height: 100vh;
     }
 
-    .wrap {
-      max-width: 1180px;
-      margin: 24px auto;
-      padding: 0 16px;
+    .topbar {
+      border-bottom: 1px solid #d6e0f3;
+      backdrop-filter: blur(8px);
+      background: rgba(255, 255, 255, 0.82);
+      position: sticky;
+      top: 0;
+      z-index: 10;
     }
 
-    .hero-banner {
-      background: linear-gradient(120deg, var(--brand), var(--brand-2));
+    .topbar-inner {
+      max-width: 1240px;
+      margin: 0 auto;
+      height: 68px;
+      padding: 0 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+      color: #0b3e9c;
+    }
+
+    .brand-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--brand), var(--brand-2));
+      box-shadow: 0 0 0 5px rgba(31, 107, 255, 0.15);
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .top-link {
+      text-decoration: none;
+      color: #24497f;
+      font-size: 13px;
+      font-weight: 700;
+      border: 1px solid #c9d8f2;
+      padding: 8px 12px;
+      border-radius: 10px;
+      background: #fff;
+    }
+
+    .top-link:hover { border-color: #a8c0ea; }
+
+    .wrap {
+      max-width: 1240px;
+      margin: 22px auto;
+      padding: 0 18px;
+    }
+
+    .hero {
+      border-radius: 18px;
+      padding: 18px 22px;
       color: #fff;
-      border-radius: 16px;
-      padding: 18px 20px;
-      box-shadow: 0 12px 30px rgba(15, 76, 189, 0.25);
+      background: linear-gradient(115deg, #093a96 0%, #0f4cbd 40%, #2f7aff 100%);
+      box-shadow: 0 14px 34px rgba(15, 76, 189, 0.28);
       margin-bottom: 14px;
     }
 
-    .hero-banner h1 {
-      margin: 0 0 8px;
-      font-size: 22px;
-      letter-spacing: 0.2px;
+    .hero h1 {
+      margin: 0 0 6px;
+      font-size: 24px;
+      letter-spacing: 0.3px;
     }
 
-    .hero-banner p {
+    .hero p {
       margin: 0;
-      opacity: 0.95;
-      line-height: 1.45;
       font-size: 14px;
+      opacity: 0.95;
     }
 
-    .shell {
+    .layout {
       display: grid;
-      grid-template-columns: 300px 1fr;
+      grid-template-columns: 320px 1fr;
       gap: 14px;
-      min-height: 72vh;
+      min-height: 76vh;
     }
 
-    .sidebar,
-    .chat-panel {
-      background: var(--card);
+    .card {
+      background: var(--surface);
       border: 1px solid var(--line);
       border-radius: 16px;
-      box-shadow: 0 8px 24px rgba(20, 33, 61, 0.09);
+      box-shadow: var(--shadow);
     }
 
     .sidebar {
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+      align-content: start;
     }
 
-    .block {
-      background: #f9fbff;
-      border: 1px solid var(--line);
+    .section {
+      border: 1px solid #e1e9f8;
       border-radius: 12px;
-      padding: 10px;
+      background: var(--surface-soft);
+      padding: 12px;
     }
 
-    .block h2 {
+    .section h2 {
       margin: 0 0 8px;
-      font-size: 13px;
-      color: var(--muted);
+      font-size: 12px;
       text-transform: uppercase;
-      letter-spacing: 0.4px;
+      letter-spacing: 0.8px;
+      color: #486188;
     }
+
+    .field + .field { margin-top: 9px; }
 
     .field label {
       display: block;
       font-size: 12px;
       color: var(--muted);
-      margin: 0 0 6px;
+      margin-bottom: 6px;
+      font-weight: 700;
     }
 
     input, textarea, select, button {
       width: 100%;
-      border-radius: 11px;
-      border: 1px solid var(--line);
+      border-radius: 10px;
+      border: 1px solid #cedaf0;
       font-size: 14px;
       font-family: inherit;
     }
@@ -121,253 +179,352 @@
     input:focus,
     textarea:focus,
     select:focus {
-      outline: 2px solid rgba(31, 107, 255, 0.25);
-      border-color: #9db9ff;
-    }
-
-    textarea {
-      min-height: 70px;
-      max-height: 180px;
-      resize: none;
-      line-height: 1.45;
+      outline: 2px solid rgba(31, 107, 255, 0.22);
+      border-color: #a2bced;
     }
 
     button {
-      padding: 10px 12px;
-      background: var(--brand);
-      color: #fff;
       border: 0;
+      padding: 10px 12px;
+      color: #fff;
+      background: linear-gradient(120deg, #0f4cbd, #1f6bff);
+      font-weight: 800;
       cursor: pointer;
-      font-weight: 700;
-      transition: transform 0.08s ease, opacity 0.2s ease, box-shadow 0.2s ease;
-      box-shadow: 0 8px 16px rgba(15, 76, 189, 0.25);
+      transition: 0.2s ease;
+      box-shadow: 0 9px 18px rgba(15, 76, 189, 0.25);
     }
 
-    button:hover { opacity: 0.95; box-shadow: 0 10px 20px rgba(15, 76, 189, 0.3); }
-    button:active { transform: translateY(1px); }
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
 
     .secondary {
-      background: #5c6b8a;
-      box-shadow: 0 8px 16px rgba(92, 107, 138, 0.25);
+      background: #61779f;
+      box-shadow: 0 9px 18px rgba(73, 97, 131, 0.23);
     }
 
-    .status-pill {
-      font-size: 13px;
-      color: var(--muted);
-      background: #f5f8ff;
-      border: 1px dashed #b8caeb;
-      border-radius: 999px;
+    .danger {
+      background: #a63a3a;
+      box-shadow: 0 9px 18px rgba(166, 58, 58, 0.24);
+    }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 9px;
+    }
+
+    .status-bar {
+      margin-top: 10px;
       padding: 8px 10px;
-      margin-top: 8px;
-    }
-
-    .status {
+      border: 1px dashed #bbcbeb;
+      border-radius: 999px;
+      background: #f1f6ff;
       font-size: 12px;
       color: var(--muted);
+      font-weight: 700;
     }
 
     .ok { color: var(--ok); }
     .bad { color: var(--bad); }
 
-    .chat-panel {
+    .workspace {
       display: grid;
-      grid-template-rows: auto 1fr auto;
+      grid-template-rows: auto auto 1fr auto;
       overflow: hidden;
     }
 
-    .chat-head {
-      border-bottom: 1px solid var(--line);
+    .workspace-head {
       padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+      background: linear-gradient(180deg, #f9fbff 0%, #ffffff 100%);
     }
 
-    .chat-head h2 {
+    .workspace-title {
       margin: 0;
-      font-size: 17px;
+      font-size: 18px;
+      font-weight: 800;
     }
 
-    .chat-head .hint {
-      margin: 2px 0 0;
-      font-size: 12px;
+    .workspace-sub {
+      margin: 4px 0 0;
       color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      background: #fcfdff;
+    }
+
+    .kpi {
+      border: 1px solid #e2eaf8;
+      border-radius: 10px;
+      padding: 8px 10px;
+      background: #fff;
+    }
+
+    .kpi .label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #61789f;
+      font-weight: 700;
+    }
+
+    .kpi .value {
+      margin-top: 3px;
+      font-size: 15px;
+      font-weight: 800;
+      color: #173261;
     }
 
     .chat {
       padding: 16px;
       overflow: auto;
-      background: linear-gradient(180deg, #f8fbff 0%, #fdfdff 100%);
+      background:
+        linear-gradient(180deg, #f7faff 0%, #ffffff 70%),
+        radial-gradient(400px 180px at 90% 0%, rgba(32, 95, 201, 0.06), transparent 70%);
     }
 
     .msg {
       margin-bottom: 12px;
-      max-width: min(78%, 720px);
+      max-width: min(78%, 760px);
       padding: 11px 13px;
       border-radius: 16px;
-      line-height: 1.45;
+      line-height: 1.46;
       white-space: pre-wrap;
-      animation: slideIn 0.24s ease;
-      box-shadow: 0 4px 14px rgba(20, 33, 61, 0.08);
+      box-shadow: 0 6px 16px rgba(20, 33, 61, 0.08);
+      animation: slideIn 0.2s ease;
+      font-weight: 600;
+    }
+
+    .msg-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #5f7296;
+      font-weight: 800;
+    }
+
+    .msg-role {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .msg-role::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #90a7cf;
+    }
+
+    .user .msg-role::before {
+      background: #2a6fff;
+    }
+
+    .msg-time {
+      color: #7890b8;
+      font-weight: 700;
     }
 
     .user {
       margin-left: auto;
-      background: linear-gradient(120deg, #e7f0ff 0%, #ddebff 100%);
-      border: 1px solid #bfd4ff;
-      border-bottom-right-radius: 6px;
+      background: linear-gradient(130deg, #e3efff 0%, #d4e5ff 100%);
+      border: 1px solid #b8cff8;
+      border-bottom-right-radius: 5px;
     }
 
     .bot {
       margin-right: auto;
-      background: #ffffff;
-      border: 1px solid #e2e8f6;
-      border-bottom-left-radius: 6px;
+      background: #fff;
+      border: 1px solid #dde6f7;
+      border-bottom-left-radius: 5px;
     }
 
     .meta {
+      margin-top: 7px;
+      padding-top: 7px;
+      border-top: 1px dashed #d8e3f8;
+      color: #607397;
       font-size: 12px;
-      color: var(--muted);
-      margin-top: 6px;
-      border-top: 1px dashed #e4ebf9;
-      padding-top: 6px;
-    }
-
-    .composer {
-      border-top: 1px solid var(--line);
-      padding: 12px;
-      background: #fff;
-      display: grid;
-      grid-template-columns: 1fr auto auto;
-      gap: 8px;
-      align-items: end;
-    }
-
-    .composer .actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    .composer button {
-      width: auto;
-      min-width: 128px;
+      font-weight: 700;
     }
 
     .empty {
       text-align: center;
       color: var(--muted);
-      font-size: 14px;
-      padding: 24px 12px;
-      border: 1px dashed #cfdcf4;
-      background: #f5f9ff;
+      border: 1px dashed #c9d9f3;
       border-radius: 12px;
+      background: #f4f8ff;
+      padding: 28px 14px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .typing {
+      display: inline-flex;
+      gap: 5px;
+      align-items: center;
+      padding: 5px 0;
+    }
+
+    .typing span {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #7f9fd8;
+      animation: blink 1s infinite ease-in-out;
+    }
+
+    .typing span:nth-child(2) { animation-delay: 0.12s; }
+    .typing span:nth-child(3) { animation-delay: 0.24s; }
+
+    .composer {
+      padding: 12px;
+      border-top: 1px solid var(--line);
+      background: #fff;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: end;
+    }
+
+    .composer textarea {
+      min-height: 74px;
+      max-height: 180px;
+      resize: none;
+      line-height: 1.45;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .actions button {
+      width: auto;
+      min-width: 118px;
     }
 
     @keyframes slideIn {
-      from { opacity: 0; transform: translateY(6px); }
+      from { opacity: 0; transform: translateY(4px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
-    @media (max-width: 980px) {
-      .shell {
-        grid-template-columns: 1fr;
-      }
+    @keyframes blink {
+      0%, 80%, 100% { transform: scale(0.7); opacity: 0.5; }
+      40% { transform: scale(1); opacity: 1; }
+    }
 
-      .sidebar {
-        order: 2;
-      }
-
-      .chat-panel {
-        order: 1;
-        min-height: 72vh;
-      }
-
-      .composer {
-        grid-template-columns: 1fr;
-      }
-
-      .composer .actions {
-        width: 100%;
-      }
-
-      .composer .actions button {
-        flex: 1;
-      }
-
-      .msg {
-        max-width: 92%;
-      }
+    @media (max-width: 1020px) {
+      .layout { grid-template-columns: 1fr; }
+      .composer { grid-template-columns: 1fr; }
+      .actions { width: 100%; }
+      .actions button { flex: 1; }
+      .msg { max-width: 92%; }
+      .kpis { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand"><span class="brand-dot"></span>Bausen RAG Workspace</div>
+      <div class="top-actions">
+        <a class="top-link" href="/ui">Colaborador</a>
+        <a class="top-link" href="/admin">Administracion</a>
+      </div>
+    </div>
+  </header>
+
   <div class="wrap">
-    <section class="hero-banner">
-      <h1>RAG Assistant</h1>
-      <p>Interfaz para colaboradores. Mantiene seguridad por API Key y te permite consultar documentos en formato chat.</p>
+    <section class="hero">
+      <h1>Centro de Conversaciones</h1>
+      <p>Interfaz colaborativa de nivel corporativo para consultas con trazabilidad, control por sesión y registro continuo.</p>
     </section>
 
-    <main class="shell">
-      <aside class="sidebar">
-        <section class="block">
-          <h2>Sesion</h2>
+    <main class="layout">
+      <aside class="card sidebar">
+        <section class="section">
+          <h2>Seguridad y contexto</h2>
           <div class="field">
             <label for="apiKey">API Key</label>
-            <input id="apiKey" type="password" placeholder="colab_xxx..." />
+            <input id="apiKey" type="password" placeholder="Ingresa tu API key de colaborador" />
           </div>
-
-          <div class="field" style="margin-top:10px;">
+          <div class="field">
             <label for="collection">Collection</label>
             <input id="collection" type="text" value="default" />
           </div>
-
-          <button id="healthBtn" type="button" style="margin-top:10px;">Ver estado</button>
-
-          <div class="status-pill">
-            <span class="status" id="statusText">Estado: sin verificar.</span>
-          </div>
+          <button id="healthBtn" type="button">Verificar servicio</button>
+          <div class="status-bar"><span id="statusText">Estado: sin verificar.</span></div>
         </section>
 
-        <section class="block">
-          <h2>Conversaciones</h2>
+        <section class="section">
+          <h2>Gestión de chats</h2>
           <div class="field">
-            <label for="chatSelect">Selecciona chat</label>
+            <label for="chatSelect">Conversación</label>
             <select id="chatSelect">
               <option value="">(Sin seleccionar)</option>
             </select>
           </div>
-
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:10px;">
-            <button id="newChatBtn" type="button">Nuevo chat</button>
-            <button id="refreshChatsBtn" type="button" class="secondary">Recargar</button>
+          <div class="mini-grid">
+            <button id="newChatBtn" type="button">Nuevo</button>
+            <button id="refreshChatsBtn" type="button" class="secondary">Actualizar</button>
           </div>
-
-          <button id="deleteChatBtn" type="button" class="secondary" style="margin-top:8px;">Eliminar chat</button>
-          <div class="status" style="margin-top:10px;">Tip: cada API key ve solo sus propias conversaciones.</div>
+          <button id="deleteChatBtn" type="button" class="danger" style="margin-top:8px;">Eliminar</button>
         </section>
       </aside>
 
-      <section class="chat-panel">
-        <header class="chat-head">
+      <section class="card workspace">
+        <header class="workspace-head">
           <div>
-            <h2>Chat de consulta</h2>
-            <p class="hint">Respuestas basadas en los documentos indexados</p>
+            <h2 class="workspace-title">Asistente corporativo</h2>
+            <p class="workspace-sub">Respuestas documentadas y versionadas por sesión</p>
           </div>
         </header>
 
+        <section class="kpis">
+          <article class="kpi">
+            <div class="label">Colección activa</div>
+            <div class="value" id="kpiCollection">default</div>
+          </article>
+          <article class="kpi">
+            <div class="label">Sesión actual</div>
+            <div class="value" id="kpiSession">Sin seleccionar</div>
+          </article>
+          <article class="kpi">
+            <div class="label">Mensajes cargados</div>
+            <div class="value" id="kpiMessages">0</div>
+          </article>
+        </section>
+
         <div class="chat" id="chat">
-          <div class="empty" id="emptyState">Todavia no hay mensajes. Haz una pregunta para iniciar la conversacion.</div>
+          <div class="empty" id="emptyState">No hay actividad aún. Crea o selecciona una conversación para comenzar.</div>
         </div>
 
         <footer class="composer">
           <div class="field" style="margin:0;">
-            <label for="question">Pregunta</label>
-            <textarea id="question" placeholder="Escribe una pregunta para el asistente..."></textarea>
+            <label for="question">Consulta</label>
+            <textarea id="question" placeholder="Escribe tu consulta y presiona Ctrl + Enter para enviar..."></textarea>
           </div>
           <div class="actions">
             <button id="askBtn" type="button">Enviar</button>
-            <button id="clearBtn" type="button" class="secondary">Limpiar</button>
+            <button id="clearBtn" type="button" class="secondary">Limpiar vista</button>
           </div>
         </footer>
       </section>
@@ -387,7 +544,19 @@
     const questionInput = document.getElementById("question");
     const collectionInput = document.getElementById("collection");
     const chat = document.getElementById("chat");
+    const kpiCollection = document.getElementById("kpiCollection");
+    const kpiSession = document.getElementById("kpiSession");
+    const kpiMessages = document.getElementById("kpiMessages");
+
     let currentSessionId = null;
+    let loadedMessages = 0;
+    let askInFlight = false;
+
+    function refreshKpis() {
+      kpiCollection.textContent = collectionInput.value.trim() || "default";
+      kpiSession.textContent = currentSessionId ? `#${currentSessionId}` : "Sin seleccionar";
+      kpiMessages.textContent = String(loadedMessages);
+    }
 
     function apiHeaders() {
       const headers = { "Content-Type": "application/json" };
@@ -403,8 +572,10 @@
       const empty = document.createElement("div");
       empty.className = "empty";
       empty.id = "emptyState";
-      empty.textContent = message || "Todavia no hay mensajes. Haz una pregunta para iniciar la conversacion.";
+      empty.textContent = message || "No hay actividad aún. Crea o selecciona una conversación para comenzar.";
       chat.appendChild(empty);
+      loadedMessages = 0;
+      refreshKpis();
     }
 
     function hideEmptyState() {
@@ -412,11 +583,32 @@
       if (emptyState) emptyState.remove();
     }
 
+    function nowStamp() {
+      return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    }
+
     function addMessage(kind, text, meta = "") {
       hideEmptyState();
       const div = document.createElement("div");
       div.className = "msg " + (kind === "user" ? "user" : "bot");
-      div.textContent = text;
+
+      const head = document.createElement("div");
+      head.className = "msg-head";
+      const role = document.createElement("span");
+      role.className = "msg-role";
+      role.textContent = kind === "user" ? "Colaborador" : "Asistente";
+      const time = document.createElement("span");
+      time.className = "msg-time";
+      time.textContent = nowStamp();
+      head.appendChild(role);
+      head.appendChild(time);
+
+      const content = document.createElement("div");
+      content.textContent = text;
+
+      div.appendChild(head);
+      div.appendChild(content);
+
       if (meta) {
         const m = document.createElement("div");
         m.className = "meta";
@@ -425,11 +617,35 @@
       }
       chat.appendChild(div);
       chat.scrollTop = chat.scrollHeight;
+      loadedMessages += 1;
+      refreshKpis();
+    }
+
+    function setLoading(active) {
+      askInFlight = active;
+      askBtn.disabled = active;
+      askBtn.textContent = active ? "Procesando..." : "Enviar";
+      questionInput.disabled = active;
+    }
+
+    function addTyping() {
+      hideEmptyState();
+      const wrapper = document.createElement("div");
+      wrapper.className = "msg bot";
+      wrapper.id = "typingIndicator";
+      wrapper.innerHTML = '<div class="msg-head"><span class="msg-role">Asistente</span><span class="msg-time">' + nowStamp() + '</span></div><div class="typing"><span></span><span></span><span></span></div>';
+      chat.appendChild(wrapper);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function removeTyping() {
+      const typing = document.getElementById("typingIndicator");
+      if (typing) typing.remove();
     }
 
     async function checkHealth() {
       statusText.textContent = "Estado: verificando...";
-      statusText.className = "status";
+      statusText.className = "";
       try {
         const res = await fetch("/health");
         if (!res.ok) {
@@ -438,10 +654,10 @@
         }
         const data = await res.json();
         statusText.textContent = "Estado: API OK | Ollama: " + data.ollama + " | Chroma: " + data.chromadb;
-        statusText.classList.add("ok");
+        statusText.className = "ok";
       } catch (err) {
         statusText.textContent = "Estado: error - " + err.message;
-        statusText.classList.add("bad");
+        statusText.className = "bad";
       }
     }
 
@@ -481,6 +697,7 @@
           currentSessionId = null;
           chatSelect.value = "";
         }
+        refreshKpis();
       } catch (err) {
         addMessage("bot", "No se pudo cargar la lista de chats: " + err.message);
       }
@@ -501,7 +718,7 @@
         }
         currentSessionId = Number(data.id);
         await loadChats(currentSessionId);
-        showEmptyState("Nuevo chat listo. Escribe tu primera pregunta.");
+        showEmptyState("Nueva conversación lista. Puedes iniciar una consulta.");
       } catch (err) {
         addMessage("bot", "No se pudo crear el chat: " + err.message);
       }
@@ -522,11 +739,12 @@
         }
 
         if (!data.length) {
-          showEmptyState("Este chat no tiene mensajes todavia.");
+          showEmptyState("Esta conversación no tiene mensajes aún.");
           return;
         }
 
         chat.innerHTML = "";
+        loadedMessages = 0;
         for (const msg of data) {
           const meta = msg.meta && Object.keys(msg.meta).length ? JSON.stringify(msg.meta) : "";
           const kind = msg.role === "user" ? "user" : "bot";
@@ -542,7 +760,7 @@
         addMessage("bot", "Selecciona un chat antes de eliminar.");
         return;
       }
-      if (!window.confirm("Se eliminara este chat con todo su historial. Continuar?")) {
+      if (!window.confirm("Se eliminará esta conversación con todo su historial. ¿Continuar?")) {
         return;
       }
 
@@ -558,7 +776,7 @@
         }
         currentSessionId = null;
         await loadChats();
-        showEmptyState("Chat eliminado.");
+        showEmptyState("Conversación eliminada correctamente.");
       } catch (err) {
         addMessage("bot", "No se pudo eliminar el chat: " + err.message);
       }
@@ -567,9 +785,14 @@
     async function ask() {
       const question = questionInput.value.trim();
       const collection = collectionInput.value.trim() || "default";
+      refreshKpis();
 
       if (!question) {
         addMessage("bot", "Escribe una pregunta antes de enviar.");
+        return;
+      }
+
+      if (askInFlight) {
         return;
       }
 
@@ -584,6 +807,8 @@
 
       addMessage("user", question, "Collection: " + collection);
       questionInput.value = "";
+      setLoading(true);
+      addTyping();
 
       try {
         const res = await fetch("/ask", {
@@ -607,9 +832,14 @@
         currentSessionId = Number(data.session_id || currentSessionId);
         await loadChats(currentSessionId);
         const meta = "Contexto usado: " + data.context_used + " chunks";
+        removeTyping();
         addMessage("bot", data.answer || "(Sin respuesta)", meta);
       } catch (err) {
+        removeTyping();
         addMessage("bot", "No se pudo procesar la pregunta: " + err.message);
+      } finally {
+        setLoading(false);
+        questionInput.focus();
       }
     }
 
@@ -621,16 +851,20 @@
     chatSelect.addEventListener("change", async () => {
       const selected = Number(chatSelect.value || 0);
       currentSessionId = selected || null;
+      refreshKpis();
       await loadMessages(currentSessionId);
     });
+
     apiKeyInput.addEventListener("change", async () => {
       currentSessionId = null;
       await loadChats();
-      showEmptyState("API key cambiada. Selecciona o crea un chat.");
+      showEmptyState("API key actualizada. Selecciona o crea una conversación.");
     });
 
+    collectionInput.addEventListener("input", refreshKpis);
+
     clearBtn.addEventListener("click", () => {
-      showEmptyState();
+      showEmptyState("Vista limpia. El historial permanece guardado en la sesión activa.");
     });
 
     questionInput.addEventListener("keydown", (e) => {
@@ -640,6 +874,7 @@
     });
 
     showEmptyState();
+    refreshKpis();
     loadChats();
   </script>
 </body>

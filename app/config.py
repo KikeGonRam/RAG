@@ -27,6 +27,10 @@ class Settings(BaseSettings):
     API_KEYS: str = ""
     API_KEY_HEADER_NAME: str = "X-API-Key"
 
+    # Panel admin de keys
+    ADMIN_PANEL_PASSWORD: str = ""
+    ADMIN_PASSWORD_HEADER_NAME: str = "X-Admin-Password"
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

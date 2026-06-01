@@ -63,6 +63,11 @@ services:
       - CHUNK_OVERLAP=64
       - LLM_TEMPERATURE=0.2
       - LLM_CTX_WINDOW=4096
+      - API_KEY_ENABLED=${API_KEY_ENABLED:-false}
+      - API_KEYS=${API_KEYS:-}
+      - API_KEY_HEADER_NAME=${API_KEY_HEADER_NAME:-X-API-Key}
+      - ADMIN_PANEL_PASSWORD=${ADMIN_PANEL_PASSWORD:-}
+      - ADMIN_PASSWORD_HEADER_NAME=${ADMIN_PASSWORD_HEADER_NAME:-X-Admin-Password}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:

@@ -5,9 +5,10 @@ from typing import Optional
 import logging
 from pathlib import Path
 
+from app.api_key_store import ApiKeyStore
 from app.chat_store import ChatStore
 from app.rag import RAGPipeline
-from app.security import get_collaborator_id, require_api_key
+from app.security import get_collaborator_id, require_admin_password, require_api_key
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -20,7 +21,9 @@ app = FastAPI(
 
 rag = RAGPipeline()
 chat_store = ChatStore()
+api_key_store = ApiKeyStore()
 UI_PATH = Path(__file__).parent / "static" / "index.html"
+ADMIN_UI_PATH = Path(__file__).parent / "static" / "admin.html"
 
 
 # ── Schemas ──────────────────────────────────────────────────────────────────
@@ -70,6 +73,24 @@ class ChatMessageResponse(BaseModel):
     created_at: str
 
 
+class AdminCreateKeyRequest(BaseModel):
+    name: str
+
+
+class AdminApiKeyRow(BaseModel):
+    id: int
+    name: str
+    key_prefix: str
+    is_active: int
+    created_at: str
+    last_used_at: Optional[str] = None
+    use_count: int
+
+
+class AdminCreateKeyResponse(AdminApiKeyRow):
+    api_key: str
+
+
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
 @app.get("/")
@@ -83,6 +104,14 @@ async def ui():
     if not UI_PATH.exists():
         raise HTTPException(status_code=404, detail="UI no encontrada")
     return FileResponse(UI_PATH)
+
+
+@app.get("/admin", include_in_schema=False)
+async def admin_ui():
+    """Panel visual para administrar API keys de colaboradores."""
+    if not ADMIN_UI_PATH.exists():
+        raise HTTPException(status_code=404, detail="Panel admin no encontrado")
+    return FileResponse(ADMIN_UI_PATH)
 
 
 @app.get("/health")
@@ -238,3 +267,27 @@ async def list_collections():
         return {"collections": cols}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/admin/keys", response_model=list[AdminApiKeyRow], dependencies=[Depends(require_admin_password)])
+async def admin_list_keys():
+    """Lista API keys registradas para colaboradores."""
+    return api_key_store.list_keys()
+
+
+@app.post("/admin/keys", response_model=AdminCreateKeyResponse, dependencies=[Depends(require_admin_password)])
+async def admin_create_key(req: AdminCreateKeyRequest):
+    """Genera una API key y la registra en base de datos."""
+    name = req.name.strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="El nombre de la key es obligatorio")
+    return api_key_store.create_key(name=name)
+
+
+@app.delete("/admin/keys/{key_id}", dependencies=[Depends(require_admin_password)])
+async def admin_deactivate_key(key_id: int):
+    """Desactiva una API key existente."""
+    ok = api_key_store.deactivate_key(key_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Key no encontrada")
+    return {"status": "deactivated", "key_id": key_id}
