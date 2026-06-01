@@ -215,6 +215,44 @@ Variables de entorno disponibles en `.env`:
 | `API_KEY_HEADER_NAME` | `X-API-Key` | Nombre del header HTTP |
 | `ADMIN_PANEL_PASSWORD` | `` | Password del panel admin de keys |
 | `ADMIN_PASSWORD_HEADER_NAME` | `X-Admin-Password` | Header para endpoints admin |
+| `APP_ENV` | `development` | Entorno de ejecución (`development` o `production`) |
+| `CORS_ALLOWED_ORIGINS` | `*` | Orígenes CORS permitidos (CSV) |
+| `CORS_ALLOWED_HEADERS` | `Content-Type,X-API-Key,X-Admin-Password` | Headers CORS permitidos |
+| `RATE_LIMIT_ENABLED` | `true` | Activa rate limiting básico |
+| `RATE_LIMIT_REQUESTS_PER_MINUTE` | `30` | Máximo por ventana y ruta |
+| `RATE_LIMIT_WINDOW_SECONDS` | `60` | Duración de ventana de rate limit |
+
+## 🔒 Hardening de producción (Fase 1)
+
+Se aplicaron controles de seguridad para minimizar exposición accidental en despliegues reales:
+
+- Validación de arranque en modo producción.
+- CORS configurable por variables de entorno.
+- Rate limiting básico por colaborador/IP en `/ask` y `/ingest`.
+- Estado explícito del panel admin cuando falta password.
+
+### Reglas automáticas en `APP_ENV=production`
+
+En producción, la API no inicia si:
+
+- `API_KEY_ENABLED=false`
+- `ADMIN_PANEL_PASSWORD` está vacío
+- `CORS_ALLOWED_ORIGINS=*`
+
+Esto evita correr en modo inseguro por error de configuración.
+
+### Configuración recomendada de producción
+
+```env
+APP_ENV=production
+API_KEY_ENABLED=true
+ADMIN_PANEL_PASSWORD=CAMBIA_ESTA_PASSWORD
+CORS_ALLOWED_ORIGINS=https://tu-dominio.com,https://admin.tu-dominio.com
+CORS_ALLOWED_HEADERS=Content-Type,X-API-Key,X-Admin-Password
+RATE_LIMIT_ENABLED=true
+RATE_LIMIT_REQUESTS_PER_MINUTE=30
+RATE_LIMIT_WINDOW_SECONDS=60
+```
 
 ### Acceso para colaboradores con API keys
 

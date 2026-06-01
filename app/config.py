@@ -5,7 +5,14 @@ config.py — Configuración centralizada vía variables de entorno.
 from pydantic_settings import BaseSettings
 
 
+def _split_csv(raw: str) -> list[str]:
+    return [item.strip() for item in raw.split(",") if item.strip()]
+
+
 class Settings(BaseSettings):
+    # Entorno
+    APP_ENV: str = "development"
+
     # Ollama
     OLLAMA_BASE_URL: str = "http://ollama:11434"
     OLLAMA_MODEL: str = "qwen2.5:7b"
@@ -30,6 +37,24 @@ class Settings(BaseSettings):
     # Panel admin de keys
     ADMIN_PANEL_PASSWORD: str = ""
     ADMIN_PASSWORD_HEADER_NAME: str = "X-Admin-Password"
+
+    # CORS
+    CORS_ALLOWED_ORIGINS: str = "*"
+    CORS_ALLOWED_HEADERS: str = "Content-Type,X-API-Key,X-Admin-Password"
+
+    # Rate limiting
+    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_REQUESTS_PER_MINUTE: int = 30
+    RATE_LIMIT_WINDOW_SECONDS: int = 60
+
+    def is_production(self) -> bool:
+        return self.APP_ENV.strip().lower() in {"production", "prod"}
+
+    def cors_origins(self) -> list[str]:
+        return _split_csv(self.CORS_ALLOWED_ORIGINS)
+
+    def cors_headers(self) -> list[str]:
+        return _split_csv(self.CORS_ALLOWED_HEADERS)
 
     class Config:
         env_file = ".env"

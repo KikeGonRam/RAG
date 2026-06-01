@@ -13,14 +13,14 @@ from app.api.schemas import (
     IngestResponse,
 )
 from app.core.state import chat_store, rag
-from app.security import get_collaborator_id, require_api_key
+from app.security import enforce_collab_rate_limit, get_collaborator_id, require_api_key
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(dependencies=[Depends(require_api_key)], tags=["collaborator"])
 
 
-@router.post("/ingest", response_model=IngestResponse)
+@router.post("/ingest", response_model=IngestResponse, dependencies=[Depends(enforce_collab_rate_limit)])
 async def ingest(req: IngestRequest):
     texts = []
     if req.text:
@@ -39,7 +39,7 @@ async def ingest(req: IngestRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/ask", response_model=AskResponse)
+@router.post("/ask", response_model=AskResponse, dependencies=[Depends(enforce_collab_rate_limit)])
 async def ask(req: AskRequest, collaborator_id: str = Depends(get_collaborator_id)):
     if not req.question.strip():
         raise HTTPException(status_code=400, detail="La pregunta no puede estar vacia.")

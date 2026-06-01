@@ -4,9 +4,10 @@ security.py - Validacion de API keys para endpoints protegidos.
 
 import hmac
 import hashlib
+import time
 from functools import lru_cache
 
-from fastapi import Header, HTTPException, Security, status
+from fastapi import Header, HTTPException, Request, Security, status
 from fastapi.security import APIKeyHeader
 
 from app.api_key_store import ApiKeyStore
@@ -14,6 +15,7 @@ from app.config import settings
 
 api_key_header = APIKeyHeader(name=settings.API_KEY_HEADER_NAME, auto_error=False)
 api_key_store = ApiKeyStore()
+_rate_limit_hits: dict[str, list[float]] = {}
 
 
 @lru_cache(maxsize=1)
@@ -101,3 +103,45 @@ async def get_collaborator_id(api_key: str | None = Security(api_key_header)) ->
 
     digest = hashlib.sha256(key.encode("utf-8")).hexdigest()[:16]
     return f"key_{digest}"
+
+
+def _request_identity(request: Request, api_key: str | None) -> str:
+    if api_key:
+        return f"k:{hashlib.sha256(api_key.encode('utf-8')).hexdigest()[:16]}"
+
+    forwarded = request.headers.get("x-forwarded-for", "").strip()
+    if forwarded:
+        ip = forwarded.split(",")[0].strip()
+        if ip:
+            return f"ip:{ip}"
+
+    client_host = request.client.host if request.client else "unknown"
+    return f"ip:{client_host}"
+
+
+async def enforce_collab_rate_limit(
+    request: Request,
+    api_key: str | None = Security(api_key_header),
+) -> None:
+    if not settings.RATE_LIMIT_ENABLED:
+        return
+
+    identity = _request_identity(request, api_key if settings.API_KEY_ENABLED else None)
+    route_path = request.url.path
+    bucket = f"{identity}:{route_path}"
+    now = time.time()
+    window_seconds = max(1, settings.RATE_LIMIT_WINDOW_SECONDS)
+    max_requests = max(1, settings.RATE_LIMIT_REQUESTS_PER_MINUTE)
+    window_start = now - window_seconds
+
+    hits = _rate_limit_hits.get(bucket, [])
+    hits = [ts for ts in hits if ts >= window_start]
+
+    if len(hits) >= max_requests:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Rate limit excedido. Intenta de nuevo en unos segundos.",
+        )
+
+    hits.append(now)
+    _rate_limit_hits[bucket] = hits
