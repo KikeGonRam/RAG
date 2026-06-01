@@ -371,6 +371,36 @@ docker exec -it rag-ollama ollama list
 
 ---
 
+## ✅ Tests de integración
+
+Se agregó una suite base en `tests/` para validar flujos críticos:
+
+- autenticación de colaboradores cuando `API_KEY_ENABLED=true`
+- seguridad del panel admin (`401/503` según configuración)
+- fallback funcional de `/ask` con persistencia de chat
+- rate limiting en endpoints críticos (`/ingest` y `/ask`)
+
+Ejecución local:
+
+```bash
+pip install -r requirements-dev.txt
+pytest -q
+```
+
+---
+
+## 🤖 CI (GitHub Actions)
+
+El repositorio incluye workflow en `.github/workflows/ci.yml` con tres jobs:
+
+- `lint`: ejecuta `ruff check app tests`
+- `test`: ejecuta `pytest`
+- `docker-build`: valida `docker build` de la imagen
+
+Se dispara en `push` y `pull_request` sobre `main`.
+
+---
+
 ## 🏗️ Arquitectura RAG
 
 ```text
@@ -418,5 +448,6 @@ POST /ask:
 - [ ] Soporte para ingesta de PDFs
 - [ ] Multi-tenancy por colecciones separadas
 - [ ] Autenticación con JWT
-- [ ] Rate limiting
+- [x] Rate limiting
 - [ ] Métricas con Prometheus + Grafana
+- [x] CI básica (lint + test + docker build)
