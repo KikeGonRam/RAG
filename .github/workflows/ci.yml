@@ -21,8 +21,9 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install --only-binary :all: -r requirements.txt
-          pip install --only-binary :all: -r requirements-dev.txt
+          # Dependencias bloqueadas con hashes (requirements-ci.lock). Para regenerarlo:
+          # pip-compile --generate-hashes --strip-extras --allow-unsafe -o requirements-ci.lock requirements.txt requirements-dev.txt
+          pip install --only-binary :all: --require-hashes -r requirements-ci.lock
 
       - name: Ruff
         run: ruff check app tests
@@ -40,8 +41,9 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install --only-binary :all: -r requirements.txt
-          pip install --only-binary :all: -r requirements-dev.txt
+          # Dependencias bloqueadas con hashes (requirements-ci.lock). Para regenerarlo:
+          # pip-compile --generate-hashes --strip-extras --allow-unsafe -o requirements-ci.lock requirements.txt requirements-dev.txt
+          pip install --only-binary :all: --require-hashes -r requirements-ci.lock
 
       - name: Run tests
         env:
