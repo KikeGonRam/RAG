@@ -5,13 +5,15 @@ api_key_store.py - Gestion de API keys para colaboradores.
 from __future__ import annotations
 
 import hashlib
+import os
 import secrets
 import sqlite3
 import threading
 from pathlib import Path
 from typing import Any
 
-DB_PATH = Path("/app/data/chat_history.db")
+# La ruta se puede cambiar con CHAT_DB_PATH (por ejemplo en el CI, donde /app no es escribible).
+DB_PATH = Path(os.environ.get("CHAT_DB_PATH", "/app/data/chat_history.db"))
 
 
 def sha256_text(value: str) -> str:

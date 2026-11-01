@@ -46,6 +46,10 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: Run tests
+        env:
+          # /app no es escribible en el runner: las bases de datos de las pruebas van a una carpeta temporal.
+          CHAT_DB_PATH: ${{ runner.temp }}/chat_history.db
+          CHROMA_PATH: ${{ runner.temp }}/chroma_db
         run: pytest -q
 
   docker-build:
