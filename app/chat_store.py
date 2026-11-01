@@ -5,12 +5,14 @@ chat_store.py - Persistencia simple de sesiones y mensajes de chat por colaborad
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 import threading
 from pathlib import Path
 from typing import Any
 
-DB_PATH = Path("/app/data/chat_history.db")
+# La ruta se puede cambiar con CHAT_DB_PATH (por ejemplo en el CI, donde /app no es escribible).
+DB_PATH = Path(os.environ.get("CHAT_DB_PATH", "/app/data/chat_history.db"))
 
 
 class ChatStore:
